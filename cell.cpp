@@ -20,6 +20,10 @@ int Cell::occupant() const {
     return occupant_;
 }
 
+void Cell::setCard(Card& newCard) {
+    card_ = newCard;
+}
+
 void Cell::occupy() {
     occupied_ = true; 
 }
@@ -27,3 +31,4 @@ void Cell::occupy() {
 void Cell::unoccupy() {
     occupied_ = false;
 }
+
