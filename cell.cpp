@@ -19,3 +19,11 @@ bool Cell::occupied() const {
 int Cell::occupant() const {
     return occupant_;
 }
+
+void Cell::occupy() {
+    occupied_ = true; 
+}
+
+void Cell::unoccupy() {
+    occupied_ = false;
+}

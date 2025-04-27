@@ -17,6 +17,13 @@ class Cell {
     // Occupant getter
     int occupant() const; 
 
+    void setCard(Card& newCard);
+
+    void occupy();
+
+    void unoccupy();
+
+    
  private:
     Card card_;
     bool occupied_;
