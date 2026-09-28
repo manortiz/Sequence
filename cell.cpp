@@ -1,8 +1,8 @@
 #include "cell.hpp"
 #include "card.hpp"
 
-Cell::Cell() : card_{"", ""} , occupied_{false}, occupant_{0} {
-
+Cell::Cell() : card_{Suit::Hearts, Rank::Two} , occupied_{false}, occupant_{0} {
+    
 }
 
 // Card getter

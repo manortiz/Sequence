@@ -1,19 +1,19 @@
 #include "card.hpp"
 #include <string>
 
-Card::Card() : suit_{""}, rank_{""} {
+Card::Card() : suit_{Suit::Hearts}, rank_{Rank::Two} {
     // Placeholder card 
 }
 
-Card::Card(std::string suit, std::string rank) : suit_{suit}, rank_{rank} {
-    // Nothing else to do here!
+Card::Card(Suit suit, Rank rank) : suit_{suit}, rank_{rank} {
+    // Done! 
 }
 
-std::string Card::suit() const {
+Card::Suit Card::suit() const {
     return suit_;
 }
 
-std::string Card::rank() const {
+Card::Rank Card::rank() const {
     return rank_;
 }
 

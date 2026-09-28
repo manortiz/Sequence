@@ -2,24 +2,46 @@
 #define CARD_HPP_
 
 #include <string>
+using namespace std;
 
-class Card {
-   public: 
+enum class Suit {
+    Hearts,
+    Diamonds,
+    Clubs,
+    Spades
+};
+
+enum class Rank {
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    Jack,
+    Queen,
+    King,
+    Ace
+};
+
+struct Card {
     // Disable default constructor
     Card();
 
     // Card Constructor 
-    Card(std::string suit, std::string rank);
+    Card(Suit suit, Rank rank);
 
     // Gets suit of card 
-    std::string suit() const; 
+    Suit suit() const; 
 
     // Gets rank of card
-    std::string rank() const; 
+    Rank rank() const; 
 
- private: 
-    std::string suit_;
-    std::string rank_;
+    Suit suit_;
+    Rank rank_;
 };
 
 #endif

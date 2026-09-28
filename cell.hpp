@@ -17,13 +17,21 @@ class Cell {
     // Occupant getter
     int occupant() const; 
 
+    // Card setter
     void setCard(Card& newCard);
 
+    // Mark cell as occupied
     void occupy();
 
+    // Mark cell as unoccupied
     void unoccupy();
 
-    
+    // Occupant setter
+    void setOccupant(int newOccupant); 
+
+    // Occupant remover
+    void removeOccupant();
+
  private:
     Card card_;
     bool occupied_;
