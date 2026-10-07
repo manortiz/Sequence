@@ -7,7 +7,35 @@ namespace {
 
 const char* const RANK_NAMES[] = {"2", "3", "4",  "5", "6", "7", "8",
                                   "9", "10", "J", "Q", "K", "A"};
-const char SUIT_NAMES[] = {'H', 'D', 'C', 'S'};
+
+// Unicode characters for the suits: Hearts, Diamonds, Clubs, Spades, respectively.
+// The U prefix makes each literal a single code point; without it '\u2665' is a
+// multi-character constant holding the packed UTF-8 bytes.
+const int SUIT_NAMES[] = {U'\u2665', U'\u2666', U'\u2663', U'\u2660'};
+
+// Plain-letter suits, used when parsing card names like "QS" or "10H"
+const char SUIT_LETTERS[] = {'H', 'D', 'C', 'S'};
+
+// Encodes a Unicode code point as UTF-8
+std::string toUtf8(int codePoint) {
+    std::string out;
+    if (codePoint < 0x80) {
+        out += static_cast<char>(codePoint);
+    } else if (codePoint < 0x800) {
+        out += static_cast<char>(0xC0 | (codePoint >> 6));
+        out += static_cast<char>(0x80 | (codePoint & 0x3F));
+    } else if (codePoint < 0x10000) {
+        out += static_cast<char>(0xE0 | (codePoint >> 12));
+        out += static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F));
+        out += static_cast<char>(0x80 | (codePoint & 0x3F));
+    } else {
+        out += static_cast<char>(0xF0 | (codePoint >> 18));
+        out += static_cast<char>(0x80 | ((codePoint >> 12) & 0x3F));
+        out += static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F));
+        out += static_cast<char>(0x80 | (codePoint & 0x3F));
+    }
+    return out;
+}
 
 }  // namespace
 
@@ -37,7 +65,7 @@ bool Card::isOneEyedJack() const {
 
 std::string Card::toString() const {
     return RANK_NAMES[static_cast<int>(rank_)] +
-           std::string(1, SUIT_NAMES[static_cast<int>(suit_)]);
+           toUtf8(SUIT_NAMES[static_cast<int>(suit_)]);
 }
 
 bool Card::operator==(const Card& other) const {
@@ -65,7 +93,7 @@ bool parseCard(const std::string& text, Card& out) {
     }
 
     for (int s = 0; s < 4; ++s) {
-        if (SUIT_NAMES[s] != suitChar) {
+        if (SUIT_LETTERS[s] != suitChar) {
             continue;
         }
         for (int r = 0; r < 13; ++r) {
@@ -80,4 +108,15 @@ bool parseCard(const std::string& text, Card& out) {
 
 std::ostream& operator<<(std::ostream& os, const Card& card) {
     return os << card.toString();
+}
+
+std::size_t displayWidth(const std::string& text) {
+    std::size_t width = 0;
+    for (char c : text) {
+        // Count every byte except UTF-8 continuation bytes (10xxxxxx)
+        if ((static_cast<unsigned char>(c) & 0xC0) != 0x80) {
+            ++width;
+        }
+    }
+    return width;
 }
