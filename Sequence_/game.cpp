@@ -114,8 +114,7 @@ bool Game::takeTurn(Player& current, Player& opponent) {
         }
 
         bool stuck = !hasPlayableCard(current);
-        out_ << "\nEnter a card number to play it, 'd <number>' to swap a dead card,\n"
-             << "'help' for the rules, or 'quit' to end the game.\n";
+        out_ << "'help' for the rules, or 'quit' to end the game.\n";
         if (stuck) {
             out_ << "You have no playable cards. You may 'pass'.\n";
         }
@@ -390,8 +389,6 @@ void Game::showState(const Player& current, const std::vector<Position>& highlig
     }
     board_.print(out_, lit);
 
-    out_ << "Key: ** free corner (counts for both)   (X)/(O) chip   "
-            "[X]/[O] chip in a sequence\n";
     if (!lastMove_.empty()) {
         out_ << "\nLast move: " << lastMove_ << "\n";
     }
@@ -427,7 +424,7 @@ void Game::showHand(const Player& current) const {
 }
 
 void Game::showHelp() const {
-    out_ << "HOW TO PLAY SEQUENCE (2 players)\n"
+    out_ << "SEQUENCE RULES(2 players)\n"
          << "--------------------------------\n"
          << "* Each player holds " << HAND_SIZE << " cards. On your turn, play one card and\n"
          << "  put a chip on a board space showing that card. You then draw a new card.\n"
@@ -443,7 +440,12 @@ void Game::showHelp() const {
          << "* First to " << SEQUENCES_TO_WIN << " sequences wins.\n"
          << "* Dead card: if both spaces for a card are covered, you may swap it\n"
          << "  for a new card ('d <number>') once per turn, then play.\n"
-         << "\nCOORDINATES: column letter + row number, e.g. A1 (top-left) or J10.\n";
+         << "GUIDE\n"
+         << "--------------------------------\n"
+         << "\nCoordinates: column letter + row number, e.g. A1 (top-left) or J10.\n"
+         << "Key: ** free corner (counts for both)   (X)/(O) chip   "
+            "[X]/[O] chip in a sequence\n"
+         << "Play: Enter card number (1-7) to play corresponding card or 'd <number>' to swap a dead card.\n";
 }
 
 std::string Game::prompt(const std::string& message) {
