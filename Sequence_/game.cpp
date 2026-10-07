@@ -51,7 +51,7 @@ bool isBack(const std::string& line) {
 }  // namespace
 
 Game::Game(std::istream& in, std::ostream& out)
-    : in_{in}, out_{out}, lastPos_{0, 0}, hasLastMove_{false} {
+    : in_{in}, out_{out}, sandbox_{false}, lastPos_{0, 0}, hasLastMove_{false} {
 }
 
 void Game::run() {
@@ -62,6 +62,12 @@ void Game::run() {
              << "==============================\n"
              << "Two players take turns at the same keyboard.\n"
              << "Get " << SEQUENCES_TO_WIN << " sequences of five chips in a row to win.\n\n";
+
+        if (chooseSandbox()) {
+            runSandbox();
+            return;
+        }
+
         setupPlayers();
         dealHands();
 
@@ -71,6 +77,20 @@ void Game::run() {
         }
     } catch (const InputClosed&) {
         out_ << "\nInput closed. Goodbye!\n";
+    }
+}
+
+bool Game::chooseSandbox() {
+    while (true) {
+        std::string line = toLower(
+            prompt("Press Enter to start a two-player game, or type 'sandbox' for sandbox mode: "));
+        if (line.empty()) {
+            return false;
+        }
+        if (line == "sandbox") {
+            return true;
+        }
+        out_ << "Unrecognized option '" << line << "'.\n";
     }
 }
 
@@ -171,20 +191,7 @@ bool Game::takeTurn(Player& current, Player& opponent) {
             continue;
         }
 
-        Card card = current.hand()[index];
-        MoveResult result = MoveResult::Cancelled;
-        if (card.isTwoEyedJack()) {
-            result = playTwoEyedJack(current, index);
-        } else if (card.isOneEyedJack()) {
-            result = playOneEyedJack(current, index);
-        } else if (board_.isDeadCard(card)) {
-            status = card.toString() + " is a dead card (both of its spaces are taken). " +
-                     "Swap it with 'd " + std::to_string(index + 1) + "'.";
-        } else {
-            result = playNormalCard(current, index);
-        }
-
-        if (result == MoveResult::Played) {
+        if (playCard(current, index, status) == MoveResult::Played) {
             break;
         }
     }
@@ -202,6 +209,141 @@ bool Game::takeTurn(Player& current, Player& opponent) {
 
     waitForEnter("\nPress Enter to end your turn...");
     return true;
+}
+
+void Game::runSandbox() {
+    sandbox_ = true;
+    for (int id = 1; id <= 2; ++id) {
+        players_.emplace_back("Player " + std::to_string(id), id, Board::chipSymbol(id));
+    }
+    dealHands();
+
+    std::size_t active = 0;
+    std::string status = "Welcome to sandbox mode! Type 'help' for the list of commands.";
+    while (true) {
+        Player& current = players_[active];
+        int sequencesBefore = current.sequences();
+
+        clearScreen();
+        showState(current);
+        if (!status.empty()) {
+            out_ << "\n" << status << "\n";
+            status.clear();
+        }
+
+        out_ << "\nControlling " << current.name() << " (" << current.chip() << "). "
+             << "<n> play card, p <coord> place, r <coord> remove,\n"
+             << "d <n> drop card, s switch player, help, quit\n";
+
+        std::string line = toLower(prompt("> "));
+        if (line.empty()) {
+            continue;
+        }
+
+        std::string command = line;
+        std::string arg;
+        std::size_t space = line.find(' ');
+        if (space != std::string::npos) {
+            command = line.substr(0, space);
+            arg = trim(line.substr(space + 1));
+        }
+
+        if (command == "q" || command == "quit") {
+            std::string confirm = toLower(prompt("Really quit the sandbox? (y/n) "));
+            if (confirm == "y" || confirm == "yes") {
+                out_ << "\nLeaving sandbox. Thanks for playing!\n";
+                return;
+            }
+        } else if (command == "h" || command == "help" || command == "?") {
+            clearScreen();
+            showHelp();
+            waitForEnter("\nPress Enter to return to the sandbox...");
+        } else if (command == "s" || command == "switch") {
+            active = 1 - active;
+            status = "Now controlling " + players_[active].name() + " (" +
+                     players_[active].chip() + ").";
+        } else if (command == "p" || command == "place") {
+            status = sandboxPlace(current, arg);
+        } else if (command == "r" || command == "remove") {
+            status = sandboxRemove(current, arg);
+        } else if (command == "d" || command == "drop") {
+            status = sandboxDrop(current, arg);
+        } else {
+            std::size_t index = 0;
+            if (!parseIndex(line, current.hand().size(), index)) {
+                status = "Unknown command '" + line + "'. Type 'help' for the list of commands.";
+                continue;
+            }
+            playCard(current, index, status);
+        }
+
+        // Win rules still apply in the sandbox: announce the win, but keep going
+        if (sequencesBefore < SEQUENCES_TO_WIN && current.sequences() >= SEQUENCES_TO_WIN) {
+            status = "*** " + current.name() + " (" + current.chip() + ") has " +
+                     std::to_string(current.sequences()) +
+                     " sequences and WINS! *** Keep experimenting, or 'quit' to exit.";
+        }
+    }
+}
+
+std::string Game::sandboxPlace(Player& current, const std::string& arg) {
+    Position pos{0, 0};
+    if (!parsePosition(arg, pos)) {
+        return "To place a chip, type 'p' and a coordinate, e.g. 'p E5'.";
+    }
+    if (!board_.canPlaceWild(pos)) {
+        return toString(pos) + " isn't open (it's taken or a free corner).";
+    }
+    putChip(current, pos, "placed a chip (no card) on");
+    return "";
+}
+
+std::string Game::sandboxRemove(Player& current, const std::string& arg) {
+    Position pos{0, 0};
+    if (!parsePosition(arg, pos)) {
+        return "To remove a chip, type 'r' and a coordinate, e.g. 'r E5'.";
+    }
+    const Cell& cell = board_.at(pos);
+    if (!cell.isOccupied()) {
+        return "There's no chip on " + toString(pos) + ".";
+    }
+    if (cell.inSequence()) {
+        return "The chip on " + toString(pos) +
+               " is part of a completed sequence and can't be removed.";
+    }
+
+    char chip = Board::chipSymbol(cell.occupant());
+    board_.remove(pos);
+    lastMove_ = current.name() + " removed the " + chip + " chip on " + toString(pos) + ".";
+    lastPos_ = pos;
+    hasLastMove_ = true;
+    return "";
+}
+
+std::string Game::sandboxDrop(Player& current, const std::string& arg) {
+    std::size_t index = 0;
+    if (!parseIndex(arg, current.hand().size(), index)) {
+        return "To drop a card, type 'd' and its number, e.g. 'd 3'.";
+    }
+    Card card = current.hand()[index];
+    replaceCard(current, index);
+    return "Dropped " + card.toString() + " and drew " + current.hand().back().toString() + ".";
+}
+
+Game::MoveResult Game::playCard(Player& current, std::size_t index, std::string& status) {
+    Card card = current.hand()[index];
+    if (card.isTwoEyedJack()) {
+        return playTwoEyedJack(current, index);
+    }
+    if (card.isOneEyedJack()) {
+        return playOneEyedJack(current, index);
+    }
+    if (board_.isDeadCard(card)) {
+        status = card.toString() + " is a dead card (both of its spaces are taken). " +
+                 "Swap it with 'd " + std::to_string(index + 1) + "'.";
+        return MoveResult::Cancelled;
+    }
+    return playNormalCard(current, index);
 }
 
 Game::MoveResult Game::playNormalCard(Player& current, std::size_t index) {
@@ -325,12 +467,16 @@ Game::MoveResult Game::playOneEyedJack(Player& current, std::size_t index) {
 
 void Game::placeChip(Player& current, std::size_t index, const Position& pos) {
     Card card = current.hand()[index];
+    replaceCard(current, index);
+    putChip(current, pos, "played " + card.toString() + " on");
+}
+
+void Game::putChip(Player& current, const Position& pos, const std::string& action) {
     board_.place(pos, current.id());
     int newSequences = board_.claimSequences(pos, current.id());
     current.addSequences(newSequences);
-    replaceCard(current, index);
 
-    lastMove_ = current.name() + " played " + card.toString() + " on " + toString(pos) + ".";
+    lastMove_ = current.name() + " " + action + " " + toString(pos) + ".";
     if (newSequences > 0) {
         lastMove_ += "\n*** SEQUENCE! *** " + current.name() + " now has " +
                      std::to_string(current.sequences()) + " of " +
@@ -378,7 +524,7 @@ bool Game::hasPlayableCard(const Player& current) const {
 void Game::showState(const Player& current, const std::vector<Position>& highlights) const {
     const Player& p1 = players_[0];
     const Player& p2 = players_[1];
-    out_ << "SEQUENCE   " << p1.name() << " (" << p1.chip() << "): " << p1.sequences()
+    out_ << (sandbox_ ? "SEQUENCE [SANDBOX]   " : "SEQUENCE   ") << p1.name() << " (" << p1.chip() << "): " << p1.sequences()
          << "/" << SEQUENCES_TO_WIN << " seq   " << p2.name() << " (" << p2.chip()
          << "): " << p2.sequences() << "/" << SEQUENCES_TO_WIN << " seq   Deck: "
          << deck_.size() << "\n\n";
@@ -446,6 +592,19 @@ void Game::showHelp() const {
          << "Key: ** free corner (counts for both)   (X)/(O) chip   "
             "[X]/[O] chip in a sequence\n"
          << "Play: Enter card number (1-7) to play corresponding card or 'd <number>' to swap a dead card.\n";
+
+    if (sandbox_) {
+        out_ << "\nSANDBOX COMMANDS\n"
+             << "--------------------------------\n"
+             << "  <number>      play that card from your hand (normal rules)\n"
+             << "  p <coord>     place a chip anywhere open, no card needed\n"
+             << "  r <coord>     remove any chip that isn't locked in a sequence\n"
+             << "  d <number>    drop a card and draw a new one (any time, no limit)\n"
+             << "  s             switch between Player 1 and Player 2\n"
+             << "  help, quit\n"
+             << "Sequences, locked chips, free corners, the deck, and the win\n"
+             << "condition all still follow the normal rules.\n";
+    }
 }
 
 std::string Game::prompt(const std::string& message) {
