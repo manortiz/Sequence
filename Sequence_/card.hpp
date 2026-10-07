@@ -1,6 +1,7 @@
 #ifndef CARD_HPP_
 #define CARD_HPP_
 
+#include <cstddef>
 #include <ostream>
 #include <string>
 
@@ -46,7 +47,7 @@ struct Card {
     // One-eyed jacks (Hearts, Spades) remove an opponent's chip
     bool isOneEyedJack() const;
 
-    // Short name of card, e.g. "QS", "10H"
+    // Short name of card with a suit symbol, e.g. "Q♠", "10♥" (UTF-8)
     std::string toString() const;
 
     bool operator==(const Card& other) const;
@@ -60,5 +61,9 @@ struct Card {
 bool parseCard(const std::string& text, Card& out);
 
 std::ostream& operator<<(std::ostream& os, const Card& card);
+
+// Number of terminal columns a UTF-8 string takes up (one per character, so
+// "10♥" is 3 wide even though it is 5 bytes). Use this for padding, not size().
+std::size_t displayWidth(const std::string& text);
 
 #endif

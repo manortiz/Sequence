@@ -405,7 +405,7 @@ void Game::showHand(const Player& current) const {
     for (std::size_t i = 0; i < hand.size(); ++i) {
         const Card& card = hand[i];
         std::string name = card.toString();
-        out_ << "  " << (i + 1) << ") " << name << std::string(5 - name.size(), ' ');
+        out_ << "  " << (i + 1) << ") " << name << std::string(5 - displayWidth(name), ' ');
 
         if (card.isTwoEyedJack()) {
             out_ << "two-eyed jack: wild, place a chip on any open space";
@@ -432,8 +432,10 @@ void Game::showHelp() const {
          << "* Each player holds " << HAND_SIZE << " cards. On your turn, play one card and\n"
          << "  put a chip on a board space showing that card. You then draw a new card.\n"
          << "* Every card (except jacks) appears twice on the board.\n"
-         << "* Two-eyed jacks (JD, JC) are wild: place a chip on any open space.\n"
-         << "* One-eyed jacks (JH, JS) remove one opponent chip from the board.\n"
+         << "* Two-eyed jacks (" << Card(Suit::Diamonds, Rank::Jack) << ", "
+         << Card(Suit::Clubs, Rank::Jack) << ") are wild: place a chip on any open space.\n"
+         << "* One-eyed jacks (" << Card(Suit::Hearts, Rank::Jack) << ", "
+         << Card(Suit::Spades, Rank::Jack) << ") remove one opponent chip from the board.\n"
          << "  Chips that are part of a completed sequence can't be removed.\n"
          << "* A sequence is 5 of your chips in a row: across, down, or diagonal.\n"
          << "  The four corners (**) are free spaces that count for everyone.\n"

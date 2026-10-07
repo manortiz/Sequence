@@ -210,8 +210,9 @@ void Board::print(std::ostream& os, const std::vector<Position>& highlights) con
                 content = cell.getCard().toString();
             }
 
+            // Pad by display width, not bytes: suit symbols are multi-byte UTF-8
             std::string shown = (lit ? ">" : " ") + content + (lit ? "<" : " ");
-            os << std::left << std::setw(5) << shown << std::right;
+            os << shown << std::string(5 - displayWidth(shown), ' ');
         }
         os << "| " << (r + 1) << "\n";
     }
