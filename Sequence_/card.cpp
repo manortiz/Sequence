@@ -15,6 +15,7 @@ const int SUIT_NAMES[] = {U'\u2665', U'\u2666', U'\u2663', U'\u2660'};
 
 // Plain-letter suits, used when parsing card names like "QS" or "10H"
 const char SUIT_LETTERS[] = {'H', 'D', 'C', 'S'};
+}  // namespace
 
 // Encodes a Unicode code point as UTF-8
 std::string toUtf8(int codePoint) {
@@ -36,8 +37,6 @@ std::string toUtf8(int codePoint) {
     }
     return out;
 }
-
-}  // namespace
 
 Card::Card(Suit suit, Rank rank) : suit_{suit}, rank_{rank} {
     // Done!
