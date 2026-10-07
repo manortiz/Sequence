@@ -12,13 +12,10 @@ class Cell {
     Card getCard() const;
 
     // True if cell occupied
-    bool occupied() const;
-
-    // Occupant getter
-    int occupant() const; 
+    bool occupant() const;
 
     // Card setter
-    void setCard(Card& newCard);
+    void setCard(const Card& newCard);
 
     // Mark cell as occupied
     void occupy();
@@ -34,7 +31,6 @@ class Cell {
 
  private:
     Card card_;
-    bool occupied_;
     int occupant_;
 };
 

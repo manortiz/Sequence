@@ -1,7 +1,7 @@
 #include "cell.hpp"
 #include "card.hpp"
 
-Cell::Cell() : card_{Suit::Hearts, Rank::Two} , occupied_{false}, occupant_{0} {
+Cell::Cell() : card_{Suit::Hearts, Rank::Two}, occupant_{0} {
     
 }
 
@@ -11,24 +11,26 @@ Card Cell::getCard() const {
 }
 
 // True if cell occupied
-bool Cell::occupied() const {
-    return occupied_;
-}
-
-// Occupant getter
-int Cell::occupant() const {
+bool Cell::occupant() const {
     return occupant_;
 }
 
-void Cell::setCard(Card& newCard) {
+void Cell::setCard(const Card& newCard) {
     card_ = newCard;
 }
 
 void Cell::occupy() {
-    occupied_ = true; 
+    occupant_ = 1; 
 }
 
 void Cell::unoccupy() {
-    occupied_ = false;
+    occupant_ = 0;
 }
 
+void Cell::setOccupant(int newOccupant) {
+    occupant_ = newOccupant;
+}
+
+void Cell::removeOccupant() {
+    occupant_ = 0;
+}

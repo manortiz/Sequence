@@ -2,7 +2,6 @@
 #define CARD_HPP_
 
 #include <string>
-using namespace std;
 
 enum class Suit {
     Hearts,
@@ -28,9 +27,6 @@ enum class Rank {
 };
 
 struct Card {
-    // Disable default constructor
-    Card();
-
     // Card Constructor 
     Card(Suit suit, Rank rank);
 
