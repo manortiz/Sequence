@@ -7,7 +7,7 @@
 int main() {
 #ifdef _WIN32
     // Card suits are printed as UTF-8 symbols; the Windows console needs to
-    // be told to expect UTF-8 or they show up as garbage like "â™¥"
+    // be told to expect UTF-8 or else garbage like "â™¥" shows up 
     SetConsoleOutputCP(CP_UTF8);
 #endif
 
