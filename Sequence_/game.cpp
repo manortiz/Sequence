@@ -96,13 +96,7 @@ bool Game::chooseSandbox() {
 
 void Game::setupPlayers() {
     for (int id = 1; id <= 2; ++id) {
-        std::string name =
-            prompt("Name for Player " + std::to_string(id) + " (chip " +
-                   Board::chipSymbol(id) + "): ");
-        if (name.empty()) {
-            name = "Player " + std::to_string(id);
-        }
-        players_.emplace_back(name, id, Board::chipSymbol(id));
+        players_.emplace_back("Player " + std::to_string(id), id, Board::chipSymbol(id));
     }
 }
 
@@ -213,9 +207,7 @@ bool Game::takeTurn(Player& current, Player& opponent) {
 
 void Game::runSandbox() {
     sandbox_ = true;
-    for (int id = 1; id <= 2; ++id) {
-        players_.emplace_back("Player " + std::to_string(id), id, Board::chipSymbol(id));
-    }
+    setupPlayers();
     dealHands();
 
     std::size_t active = 0;
